@@ -1,11 +1,10 @@
 'use client'
 
-// pages/index.js
 import React, { useState, useEffect } from 'react';
 
 // Load SheetJS (xlsx) library from CDN
 // This script will be available globally as 'XLSX'
-const loadScript = (src, id) => {
+const loadScript = (src: string, id: string): Promise<void> => { 
   return new Promise((resolve, reject) => {
     if (document.getElementById(id)) {
       return resolve();
@@ -13,18 +12,25 @@ const loadScript = (src, id) => {
     const script = document.createElement('script');
     script.src = src;
     script.id = id;
-    script.onload = resolve;
-    script.onerror = reject;
+    script.onload = () => resolve(); // Ensure onload resolves
+    script.onerror = (error) => reject(error); // Ensure onerror rejects with error
     document.head.appendChild(script);
   });
 };
 
+// Declare XLSX as a global variable so TypeScript knows it exists
+declare global {
+  interface Window {
+    XLSX: any; // Using 'any' for simplicity, you could define a more precise type if needed
+  }
+}
+
 function HomePage() {
-  const [excelData, setExcelData] = useState([]); // State to store parsed Excel data
-  const [fileName, setFileName] = useState(''); // State to store the name of the uploaded file
-  const [loading, setLoading] = useState(false); // State for loading indicator
-  const [error, setError] = useState(''); // State for error messages
-  const [headers, setHeaders] = useState([]); // State to store table headers
+  const [excelData, setExcelData] = useState<any[]>([]); // State to store parsed Excel data
+  const [fileName, setFileName] = useState<string>(''); // State to store the name of the uploaded file
+  const [loading, setLoading] = useState<boolean>(false); // State for loading indicator
+  const [error, setError] = useState<string>(''); // State for error messages
+  const [headers, setHeaders] = useState<string[]>([]); // State to store table headers
 
   useEffect(() => {
     // Load the SheetJS library when the component mounts
@@ -41,10 +47,10 @@ function HomePage() {
   /**
    * Handles the file input change event.
    * Reads the selected Excel file and parses its content.
-   * @param {Object} event - The file input change event.
+   * @param {React.ChangeEvent<HTMLInputElement>} event - The file input change event.
    */
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]; // Use optional chaining for files
     if (!file) {
       setError('No file selected.');
       setExcelData([]);
@@ -60,23 +66,23 @@ function HomePage() {
 
     const reader = new FileReader();
 
-    reader.onload = (e) => {
+    reader.onload = (e: ProgressEvent<FileReader>) => {
       try {
-        const data = new Uint8Array(e.target.result);
+        const data = new Uint8Array(e.target?.result as ArrayBuffer); // Type assertion for result
         // Check if XLSX is available globally after loading via CDN
-        if (typeof XLSX === 'undefined') {
+        if (typeof window.XLSX === 'undefined') {
           throw new Error('XLSX library not loaded. Please refresh the page or check your internet connection.');
         }
 
         // Read the Excel workbook
-        const workbook = XLSX.read(data, { type: 'array' });
+        const workbook = window.XLSX.read(data, { type: 'array' });
 
         // Get the first sheet name
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
 
         // Convert the worksheet to a JSON array of objects
-        const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 }); // header: 1 to get array of arrays
+        const json: any[][] = window.XLSX.utils.sheet_to_json(worksheet, { header: 1 }); // header: 1 to get array of arrays
 
         if (json.length === 0) {
           setExcelData([]);
@@ -86,12 +92,12 @@ function HomePage() {
         }
 
         // Assume the first row is the header
-        const extractedHeaders = json[0];
-        const extractedData = json.slice(1); // Data starts from the second row
+        const extractedHeaders: string[] = json[0] as string[];
+        const extractedData: any[][] = json.slice(1); // Data starts from the second row
 
         // Map data rows to objects using extracted headers
         const formattedData = extractedData.map(row => {
-          const rowObject = {};
+          const rowObject: { [key: string]: any } = {}; // Index signature for rowObject
           extractedHeaders.forEach((header, index) => {
             rowObject[header] = row[index];
           });
@@ -100,7 +106,7 @@ function HomePage() {
 
         setHeaders(extractedHeaders);
         setExcelData(formattedData);
-      } catch (err) {
+      } catch (err: any) { // Catch error as any
         console.error('Error parsing Excel file:', err);
         setError(`Error parsing file: ${err.message}. Please ensure it's a valid Excel file.`);
         setExcelData([]);
@@ -125,7 +131,7 @@ function HomePage() {
     <div className="min-h-screen bg-gray-100 p-4 font-inter">
       <div className="max-w-6xl mx-auto bg-white shadow-lg rounded-xl p-6 md:p-8">
         <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6 text-center">
-         Misogi Excel Dashboard
+          Excel Dashboard
         </h1>
 
         <div className="mb-8 p-4 border border-gray-200 rounded-lg bg-gray-50">
