@@ -21,12 +21,12 @@ const loadScript = (src: string, id: string): Promise<void> => {
 // Declare XLSX as a global variable so TypeScript knows it exists
 declare global {
   interface Window {
-    XLSX: unknown; // Using 'any' for simplicity, you could define a more precise type if needed
+    XLSX: unknown; // Using 'unknown' for simplicity, you could define a more precise type if needed
   }
 }
 
 function HomePage() {
-  const [excelData, setExcelData] = useState<any[]>([]); // State to store parsed Excel data
+  const [excelData, setExcelData] = useState<unknown[]>([]); // State to store parsed Excel data
   const [fileName, setFileName] = useState<string>(''); // State to store the name of the uploaded file
   const [loading, setLoading] = useState<boolean>(false); // State for loading indicator
   const [error, setError] = useState<string>(''); // State for error messages
@@ -82,7 +82,7 @@ function HomePage() {
         const worksheet = workbook.Sheets[sheetName];
 
         // Convert the worksheet to a JSON array of objects
-        const json: any[][] = window.XLSX.utils.sheet_to_json(worksheet, { header: 1 }); // header: 1 to get array of arrays
+        const json: unknown[][] = window.XLSX.utils.sheet_to_json(worksheet, { header: 1 }); // header: 1 to get array of arrays
 
         if (json.length === 0) {
           setExcelData([]);
@@ -93,11 +93,11 @@ function HomePage() {
 
         // Assume the first row is the header
         const extractedHeaders: string[] = json[0] as string[];
-        const extractedData: any[][] = json.slice(1); // Data starts from the second row
+        const extractedData: unknown[][] = json.slice(1); // Data starts from the second row
 
         // Map data rows to objects using extracted headers
         const formattedData = extractedData.map(row => {
-          const rowObject: { [key: string]: any } = {}; // Index signature for rowObject
+          const rowObject: { [key: string]: unknown } = {}; // Index signature for rowObject
           extractedHeaders.forEach((header, index) => {
             rowObject[header] = row[index];
           });
@@ -106,7 +106,7 @@ function HomePage() {
 
         setHeaders(extractedHeaders);
         setExcelData(formattedData);
-      } catch (err: any) { // Catch error as any
+      } catch (err: unknown) { // Catch error as unknown
         console.error('Error parsing Excel file:', err);
         setError(`Error parsing file: ${err.message}. Please ensure it's a valid Excel file.`);
         setExcelData([]);
