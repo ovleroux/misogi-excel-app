@@ -21,7 +21,7 @@ const loadScript = (src: string, id: string): Promise<void> => {
 // Declare XLSX as a global variable so TypeScript knows it exists
 declare global {
   interface Window {
-    XLSX: any; // Using 'any' for simplicity, you could define a more precise type if needed
+    XLSX: unknown; // Using 'any' for simplicity, you could define a more precise type if needed
   }
 }
 
